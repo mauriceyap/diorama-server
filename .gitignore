@@ -1,0 +1,10 @@
+out/*
+!out/program_zip_files/.gitkeep
+
+venv/
+
+*.pyc
+.idea/
+__pycache__/
+
+*.pyc
