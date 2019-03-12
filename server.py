@@ -4,6 +4,8 @@ import tornado.websocket
 import received_message_handler
 import json
 
+import network_topology
+
 
 class MainHandler(tornado.web.RequestHandler):
     def data_received(self, chunk):
@@ -11,6 +13,27 @@ class MainHandler(tornado.web.RequestHandler):
 
     def get(self):
         self.write("This is the Diorama backend server.")
+
+
+class ZipFileUploadHandler(tornado.web.RequestHandler):
+    def data_received(self, chunk):
+        pass
+
+    def post(self, program_name):
+        with open(f"out/program_zip_files/{program_name}.zip", "wb") as fh:
+            fh.write(self.request.body)
+            self.write('Upload successful')
+
+
+class SaveNetworkTopologyHandler(tornado.web.RequestHandler):
+    def data_received(self, chunk):
+        pass
+
+    def post(self):
+        body = json.loads(self.request.body)
+        language = body['language']
+        raw_network_topology = body['rawNetworkTopology']
+        print(network_topology.validate(language, raw_network_topology))
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
@@ -42,6 +65,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 def make_server():
     return tornado.web.Application([
         (r"/", MainHandler),
+        (r"/uploadZipFile/(.*)", ZipFileUploadHandler),
+        (r"/saveNetworkTopology", SaveNetworkTopologyHandler),
         (r'/ws', WSHandler),
     ])
 
