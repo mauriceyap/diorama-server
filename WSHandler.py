@@ -1,0 +1,45 @@
+import json
+from typing import Dict, Callable
+
+import tornado.websocket
+
+import programs
+import network_topology
+
+handlers: Dict[str, Callable] = {
+    'addProgram': (lambda data, _: programs.add_program(data)),
+    'modifyProgram': (lambda data, _: programs.modify_program(data)),
+    'getPrograms': (lambda _, send_func: send_func('programs', programs.get_programs())),
+    'getRawNetworkTopology': (
+        lambda _, send_func: send_func('rawNetworkTopology', network_topology.get_raw_network_topology_code()))
+}
+
+
+def handle(event: str, data, send_func: Callable):
+    handlers[event](data, send_func)
+
+
+class WSHandler(tornado.websocket.WebSocketHandler):
+    @staticmethod
+    def parse_message(message):
+        message_dict = json.loads(message)
+        return message_dict['event'], (json.loads(message_dict['data']) if 'data' in message_dict else None)
+
+    def data_received(self, chunk):
+        pass
+
+    def open(self):
+        print('new connection')
+
+    def on_message(self, message):
+        event, data = self.parse_message(message)
+        handle(event, data, self.send_message)
+
+    def send_message(self, event, data):
+        self.write_message(json.dumps({'event': event, 'data': json.dumps(data)}))
+
+    def on_close(self):
+        print('connection closed')
+
+    def check_origin(self, origin):
+        return True
