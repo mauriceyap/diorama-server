@@ -97,15 +97,25 @@ def save_unpacked_network_topology(unpacked_topology: List[Dict]):
     database.network_topology_db.upsert({'type': 'unpacked', 'data': unpacked_topology}, Query().type == 'unpacked')
 
 
+def initialise_unpacked_network_topology():
+    save_unpacked_network_topology([])
+
+
 def get_unpacked_network_topology() -> List[Dict]:
-    search_results = database.network_topology_db.search(Query().type == 'unpacked')
-    return search_results[0]['data'] if len(search_results) > 0 else None
+    if len(database.network_topology_db.search(Query().type == 'unpacked')) == 0:
+        initialise_unpacked_network_topology()
+    return database.network_topology_db.search(Query().type == 'unpacked')[0]['data']
 
 
 def save_raw_network_topology_code(raw: str):
     database.network_topology_db.upsert({'type': 'rawCode', 'data': raw}, Query().type == 'rawCode')
 
 
+def initialise_raw_network_topology_code():
+    save_raw_network_topology_code('')
+
+
 def get_raw_network_topology_code() -> List[Dict]:
-    search_results = database.network_topology_db.search(Query().type == 'rawCode')
-    return search_results[0]['data'] if len(search_results) > 0 else None
+    if len(database.network_topology_db.search(Query().type == 'rawCode')) == 0:
+        initialise_raw_network_topology_code()
+    return database.network_topology_db.search(Query().type == 'rawCode')[0]['data']
