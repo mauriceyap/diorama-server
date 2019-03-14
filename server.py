@@ -4,6 +4,7 @@ import tornado.websocket
 
 from WSHandler import WSHandler
 from http_handlers import BaseHandler, ZipFileUploadHandler, SaveNetworkTopologyHandler
+import constants
 
 
 def make_server() -> tornado.web.Application:
@@ -17,5 +18,5 @@ def make_server() -> tornado.web.Application:
 
 if __name__ == "__main__":
     server = make_server()
-    server.listen(2697)
+    server.listen(constants.DEFAULT_SERVER_PORT)
     tornado.ioloop.IOLoop.current().start()

@@ -4,13 +4,15 @@ from tinydb import Query
 
 import database
 
+NAME_UNIQUE_KEY = 'name'
+
 
 def add_program(data: Dict):
-    database.programs_db.upsert(data, Query().name == data['name'])
+    database.programs_db.upsert(data, Query().name == data[NAME_UNIQUE_KEY])
 
 
 def modify_program(data: Dict):
-    database.programs_db.update(data, Query().name == data['name'])
+    database.programs_db.update(data, Query().name == data[NAME_UNIQUE_KEY])
 
 
 def get_programs() -> List[dict]:

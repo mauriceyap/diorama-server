@@ -7,27 +7,9 @@ import network_topology
 import programs
 
 
-class BaseHandler(tornado.web.RequestHandler):
-    def data_received(self, chunk):
-        pass
-
-    def get(self):
-        self.write("This is the Diorama backend server.")
-
-
-class ZipFileUploadHandler(tornado.web.RequestHandler):
-    def data_received(self, chunk):
-        pass
-
-    def post(self, program_name: str):
-        programs.write_zip_file(program_name, self.request.body)
-        self.write('Upload successful')
-
-
-class SaveNetworkTopologyHandler(tornado.web.RequestHandler):
+class GeneralHTTPHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header('Access-Control-Allow-Methods', 'POST,OPTIONS')
         self.set_header("Access-Control-Allow-Headers",
                         "access-control-allow-origin,authorization,content-type,x-requested-with")
@@ -35,10 +17,23 @@ class SaveNetworkTopologyHandler(tornado.web.RequestHandler):
     def data_received(self, chunk):
         pass
 
-    def options(self):
+    def options(self, *args):
         self.set_status(204)
         self.finish()
 
+
+class BaseHandler(GeneralHTTPHandler):
+    def get(self):
+        self.write("This is the Diorama backend server.")
+
+
+class ZipFileUploadHandler(GeneralHTTPHandler):
+    def post(self, program_name: str):
+        programs.write_zip_file(program_name, self.request.body)
+        self.write('Upload successful')
+
+
+class SaveNetworkTopologyHandler(GeneralHTTPHandler):
     # Returns a json object of either:
     # - { isValidAndSaved: true, unpackedTopology: list of objects }
     # - { isValidAndSaved: false, errorMessage: str }
@@ -54,6 +49,5 @@ class SaveNetworkTopologyHandler(tornado.web.RequestHandler):
             network_topology.save_unpacked_network_topology(unpacked_topology)
             self.write({'isValidAndSaved': True, 'unpackedTopology': unpacked_topology})
         else:
-            self.add_header('Access-Control-Allow-Headers', 'Content-Type')
             self.write({'isValidAndSaved': False, 'errorMessage': validation_result['errorMessage'],
                         'errorData': validation_result['errorData']})

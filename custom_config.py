@@ -5,6 +5,8 @@ import constants
 
 SINGLETON = 'SINGLETON'
 GET_SINGLETON_QUERY = Query().id == SINGLETON
+CUSTOM_CONFIG_KEY = 'customConfig'
+ID_KEY = 'id'
 
 
 def initialise_custom_config():
@@ -19,8 +21,8 @@ def initialise_custom_config():
 def get_custom_config():
     if len(database.custom_config_db.search(GET_SINGLETON_QUERY)) == 0:
         initialise_custom_config()
-    return database.custom_config_db.search(GET_SINGLETON_QUERY)[0]['customConfig']
+    return database.custom_config_db.search(GET_SINGLETON_QUERY)[0][CUSTOM_CONFIG_KEY]
 
 
 def set_custom_config(custom_config):
-    return database.custom_config_db.upsert({'customConfig': custom_config, 'id': SINGLETON}, GET_SINGLETON_QUERY)
+    return database.custom_config_db.upsert({CUSTOM_CONFIG_KEY: custom_config, ID_KEY: SINGLETON}, GET_SINGLETON_QUERY)
