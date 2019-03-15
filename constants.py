@@ -1,5 +1,7 @@
 import os
 
+import dict_keys
+
 DEFAULT_SERVER_PORT = 2697
 
 DEFAULT_BASE_IP_ADDRESS = '172.190.0.4'
@@ -23,4 +25,11 @@ FILE_EXTENSIONS_FOR_RUNTIME = {
     'python2': '.py',
     'elixir': '.ex',
     'scala': '.scala'
+}
+
+RUNTIME_DATA = {
+    'python3': {
+        dict_keys.RUNTIME_DATA_WORKING_DIRECTORY: '/usr/src/app',
+        dict_keys.RUNTIME_DATA_RUN_COMMAND: ['python', '-u', 'main.py']
+    }
 }

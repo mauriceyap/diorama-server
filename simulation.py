@@ -17,6 +17,7 @@ import dict_keys
 import program_values
 import ws_events
 import simulation_values
+import util
 
 
 def get_from_simulation_db(type_key: str):
@@ -64,6 +65,14 @@ def get_simulation_config() -> Dict[str, Any]:
     return get_from_simulation_db(dict_keys.SIMULATION_CONFIG)
 
 
+def store_simulation_node_addresses(node_addresses: List[Dict[str, Any]]):
+    store_to_simulation_db(dict_keys.SIMULATION_NODE_ADDRESSES, node_addresses)
+
+
+def get_simulation_node_addresses() -> Dict[str, Any]:
+    return get_from_simulation_db(dict_keys.SIMULATION_NODE_ADDRESSES)
+
+
 def clean():
     docker_interface.remove_containers(list(map(lambda node: node[dict_keys.NODE_NID], get_simulation_node_list())))
     docker_interface.remove_images(
@@ -90,7 +99,20 @@ def load_simulation_data():
 
 
 def create_node_containers():
-    pass
+    programs_by_name = {program[dict_keys.PROGRAM_NAME]: program for program in get_simulation_program_list()}
+    nodes = get_simulation_node_list()
+    node_addresses = get_simulation_node_addresses()
+    nodes_with_addresses = util.combine_dict_lists_by_key([nodes, node_addresses], dict_keys.NODE_NID)
+    for node in nodes_with_addresses:
+        program = programs_by_name[node[dict_keys.NODE_PROGRAM]]
+        peer_nid_list = ','.join(node[dict_keys.NODE_CONNECTIONS])
+        run_args = [peer_nid_list, node[dict_keys.NODE_NID], str(node[dict_keys.NODE_ADDRESSES_PORT]),
+                    program[dict_keys.PROGRAM_MAIN_HANDLER]]
+        docker_interface.create_container_and_connect(node[dict_keys.NODE_PROGRAM], node[dict_keys.NODE_NID],
+                                                      program[dict_keys.PROGRAM_RUNTIME],
+                                                      run_args, node[dict_keys.NODE_ADDRESSES_IP_ADDRESS],
+                                                      [node[dict_keys.NODE_ADDRESSES_PORT]],
+                                                      constants.DOCKER_NETWORK_NAME)
 
 
 def get_ip_address_for_node_index(index: int, base_ip_address: str) -> str:
@@ -134,8 +156,12 @@ def get_code_for_program(program, temp_dir):
         pass
 
 
+def generate_and_store_node_addresses():
+    store_simulation_node_addresses(generate_node_addresses())
+
+
 def create_program_images(temp_dir: tempfile.TemporaryDirectory):
-    node_addresses = generate_node_addresses()
+    node_addresses = get_simulation_node_addresses()
     node_addresses_file_path = os.path.join(str(temp_dir), constants.NODE_ADDRESSES_FILE_NAME)
     with open(node_addresses_file_path, 'w') as node_addresses_file:
         yaml.dump(node_addresses, node_addresses_file, default_flow_style=False)
@@ -159,14 +185,15 @@ def set_up_simulation(send_func: Callable):
     clean()
     clear_simulation_data()
     load_simulation_data()
+    generate_and_store_node_addresses()
     with tempfile.TemporaryDirectory() as temp_dir:
         send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_VIRTUAL_NETWORK_STATE)
         create_network()
         send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_PROGRAM_IMAGES_STATE)
         create_program_images(temp_dir)
-        # send_func('simulationState', simulation_values.CREATING_NODES_STATE)
-        # create_node_containers()
-        # send_func('simulationState', simulation_values.READY_TO_RUN_STATE)
+        send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_NODES_STATE)
+        create_node_containers()
+        send_func(ws_events.SIMULATION_STATE, simulation_values.READY_TO_RUN_STATE)
 
 
 def stop_and_reset_simulation(send_func: Callable):

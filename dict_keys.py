@@ -23,6 +23,7 @@ NETWORK_TOPOLOGY_LANGUAGE = 'language'
 
 NODE_CONNECTIONS = 'connections'
 NODE_NID = 'nid'
+NODE_PROGRAM = 'program'
 
 PROGRAM_NAME = 'name'
 PROGRAM_CODE_SOURCE = 'codeSource'
@@ -33,9 +34,13 @@ PROGRAM_MAIN_HANDLER = 'mainHandler'
 SIMULATION_NODE_LIST: str = 'simulationNodeList'
 SIMULATION_PROGRAM_LIST: str = 'simulationProgramList'
 SIMULATION_CONFIG: str = 'simulationConfigKey'
+SIMULATION_NODE_ADDRESSES: str = 'simulationNodeAddresses'
 SIMULATION_DATA: str = 'data'
 SIMULATION_TYPE: str = 'type'
 
 NODE_ADDRESSES_NID = 'nid'
 NODE_ADDRESSES_IP_ADDRESS = 'ip_address'
 NODE_ADDRESSES_PORT = 'port'
+
+RUNTIME_DATA_WORKING_DIRECTORY = 'workingDirectory'
+RUNTIME_DATA_RUN_COMMAND = 'runCommand'
