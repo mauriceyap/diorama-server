@@ -1,0 +1,3 @@
+[submodule "base_node_files/python3"]
+	path = base_node_files/python3
+	url = git@github.com:mauriceyap/diorama-node-base-python3.git
