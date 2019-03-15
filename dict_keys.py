@@ -1,0 +1,41 @@
+ID = 'id'
+SINGLETON_ID = 'SINGLETON'
+
+WS_EVENT = 'event'
+WS_DATA = 'data'
+
+
+CUSTOM_CONFIG = 'customConfig'
+CUSTOM_CONFIG_BASE_IP_ADDRESS = 'baseIpAddress'
+CUSTOM_CONFIG_NETWORK_SUBNET = 'networkSubnet'
+CUSTOM_CONFIG_SELF_CONNECTED_NODES = 'selfConnectedNodes'
+CUSTOM_CONFIG_BASE_PORT = 'basePort'
+
+NETWORK_TOPOLOGY_DATA = 'data'
+NETWORK_TOPOLOGY_TYPE = 'type'
+NETWORK_TOPOLOGY_ERROR_DATA = 'errorData'
+NETWORK_TOPOLOGY_ERROR_MESSAGE = 'errorMessage'
+NETWORK_TOPOLOGY_TOPOLOGY = 'topology'
+NETWORK_TOPOLOGY_IS_VALID = 'isValid'
+NETWORK_TOPOLOGY_SINGLE_NODES = 'single_nodes'
+NETWORK_TOPOLOGY_NODE_GROUPS = 'node_groups'
+NETWORK_TOPOLOGY_LANGUAGE = 'language'
+
+NODE_CONNECTIONS = 'connections'
+NODE_NID = 'nid'
+
+PROGRAM_NAME = 'name'
+PROGRAM_CODE_SOURCE = 'codeSource'
+PROGRAM_CODE_DATA = 'codeData'
+PROGRAM_RUNTIME = 'runtime'
+PROGRAM_MAIN_HANDLER = 'mainHandler'
+
+SIMULATION_NODE_LIST: str = 'simulationNodeList'
+SIMULATION_PROGRAM_LIST: str = 'simulationProgramList'
+SIMULATION_CONFIG: str = 'simulationConfigKey'
+SIMULATION_DATA: str = 'data'
+SIMULATION_TYPE: str = 'type'
+
+NODE_ADDRESSES_NID = 'nid'
+NODE_ADDRESSES_IP_ADDRESS = 'ip_address'
+NODE_ADDRESSES_PORT = 'port'

@@ -1,0 +1,3 @@
+CODE_SOURCE_RAW = 'raw'
+CODE_SOURCE_GIT = 'git'
+CODE_SOURCE_ZIP = 'zip'

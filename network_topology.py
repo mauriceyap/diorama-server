@@ -6,19 +6,13 @@ from tinydb import Query
 
 import database
 import constants
+import dict_keys
+import network_topology_values
 
-RAW_CODE_TYPE = 'rawCode'
-UNPACKED_TYPE = 'unpacked'
-DATA_KEY = 'data'
-TYPE_KEY = 'type'
-ERROR_DATA_KEY = 'errorData'
-ERROR_MESSAGE_KEY = 'errorMessage'
-TOPOLOGY_KEY = 'topology'
-IS_VALID_KEY = 'isValid'
 ERROR_MESSAGE_PARSING = "NT_ERROR_PARSING"
 ERROR_MESSAGE_MUST_BE_MAP = "NT_ERROR_MAP_TYPE"
 ERROR_MESSAGE_INVALID_BASE_KEYS = "NT_ERROR_BASE_KEYS"
-VALID_BASE_KEYS: List[str] = ['single_nodes', 'node_groups']
+VALID_BASE_KEYS: List[str] = [dict_keys.NETWORK_TOPOLOGY_SINGLE_NODES, dict_keys.NETWORK_TOPOLOGY_NODE_GROUPS]
 
 
 class NetworkTopologyValidationException(Exception):
@@ -45,7 +39,7 @@ def validate_topology(topology):
     # TODO: more validation
 
 
-parsers: Dict[str, Callable] = {'YAML': yaml.load, 'JSON': json.loads}
+parsers: Dict[str, Callable] = {'YAML': lambda raw: yaml.load(raw, Loader=yaml.FullLoader), 'JSON': json.loads}
 parsingErrors: Dict[str, Exception] = {'YAML': yaml.YAMLError, 'JSON': json.JSONDecodeError}
 
 
@@ -54,31 +48,46 @@ def validate_raw_topology(language: str, raw: str) -> Dict[str, Any]:
         topology = parsers[language](raw)
         validate_topology(topology)
         return {
-            IS_VALID_KEY: True,
-            TOPOLOGY_KEY: topology
+            dict_keys.NETWORK_TOPOLOGY_IS_VALID: True,
+            dict_keys.NETWORK_TOPOLOGY_TOPOLOGY: topology
         }
     except parsingErrors[language] as parsingError:
         return {
-            IS_VALID_KEY: False,
-            ERROR_MESSAGE_KEY: ERROR_MESSAGE_PARSING,
-            ERROR_DATA_KEY: str(parsingError)
+            dict_keys.NETWORK_TOPOLOGY_IS_VALID: False,
+            dict_keys.NETWORK_TOPOLOGY_ERROR_MESSAGE: ERROR_MESSAGE_PARSING,
+            dict_keys.NETWORK_TOPOLOGY_ERROR_DATA: str(parsingError)
         }
     except NetworkTopologyValidationException as validationException:
         return {
-            IS_VALID_KEY: False,
-            ERROR_MESSAGE_KEY: validationException.message,
-            ERROR_DATA_KEY: validationException.data
+            dict_keys.NETWORK_TOPOLOGY_IS_VALID: False,
+            dict_keys.NETWORK_TOPOLOGY_ERROR_MESSAGE: validationException.message,
+            dict_keys.NETWORK_TOPOLOGY_ERROR_DATA: validationException.data
         }
 
 
 def unpack_topology(topology: Dict) -> List[Dict]:
+    nodes = topology[dict_keys.NETWORK_TOPOLOGY_SINGLE_NODES]
     # TODO: node groups
-    return topology['single_nodes']
+
+    for node in nodes:
+        if dict_keys.NODE_CONNECTIONS not in node:
+            node[dict_keys.NODE_CONNECTIONS] = []
+
+    for node in nodes:
+        peer_nids = node[dict_keys.NODE_CONNECTIONS]
+        peer_nodes = filter(lambda n: n[dict_keys.NODE_NID] in peer_nids, nodes)
+        for peer_node in peer_nodes:
+            peer_node[dict_keys.NODE_CONNECTIONS] = list(
+                set(peer_node[dict_keys.NODE_CONNECTIONS] + [node[dict_keys.NODE_NID]]))
+
+    return nodes
 
 
 def save_unpacked_network_topology(unpacked_topology: List[Dict]):
-    database.network_topology_db.upsert({TYPE_KEY: UNPACKED_TYPE, DATA_KEY: unpacked_topology},
-                                        Query().type == UNPACKED_TYPE)
+    database.network_topology_db.upsert(
+        {dict_keys.NETWORK_TOPOLOGY_TYPE: network_topology_values.NETWORK_TOPOLOGY_UNPACKED_TYPE,
+         dict_keys.NETWORK_TOPOLOGY_DATA: unpacked_topology},
+        Query().type == network_topology_values.NETWORK_TOPOLOGY_UNPACKED_TYPE)
 
 
 def initialise_unpacked_network_topology():
@@ -86,13 +95,17 @@ def initialise_unpacked_network_topology():
 
 
 def get_unpacked_network_topology() -> List[Dict]:
-    if len(database.network_topology_db.search(Query().type == UNPACKED_TYPE)) == 0:
+    if len(database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_UNPACKED_TYPE)) == 0:
         initialise_unpacked_network_topology()
-    return database.network_topology_db.search(Query().type == UNPACKED_TYPE)[0][DATA_KEY]
+    return database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_UNPACKED_TYPE)[0][
+        dict_keys.NETWORK_TOPOLOGY_DATA]
 
 
 def save_raw_network_topology_code(raw: str):
-    database.network_topology_db.upsert({TYPE_KEY: RAW_CODE_TYPE, DATA_KEY: raw}, Query().type == RAW_CODE_TYPE)
+    database.network_topology_db.upsert(
+        {dict_keys.NETWORK_TOPOLOGY_TYPE: network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE,
+         dict_keys.NETWORK_TOPOLOGY_DATA: raw},
+        Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)
 
 
 def initialise_raw_network_topology_code():
@@ -100,6 +113,7 @@ def initialise_raw_network_topology_code():
 
 
 def get_raw_network_topology_code() -> List[Dict]:
-    if len(database.network_topology_db.search(Query().type == RAW_CODE_TYPE)) == 0:
+    if len(database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)) == 0:
         initialise_raw_network_topology_code()
-    return database.network_topology_db.search(Query().type == RAW_CODE_TYPE)[0][DATA_KEY]
+    return database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)[0][
+        dict_keys.NETWORK_TOPOLOGY_DATA]

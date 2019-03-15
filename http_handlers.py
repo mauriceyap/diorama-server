@@ -5,6 +5,7 @@ import tornado.web
 
 import network_topology
 import programs
+import dict_keys
 
 
 class GeneralHTTPHandler(tornado.web.RequestHandler):
@@ -42,12 +43,13 @@ class SaveNetworkTopologyHandler(GeneralHTTPHandler):
         language: str = body['language']
         raw_network_topology: str = body['rawNetworkTopology']
         validation_result = network_topology.validate_raw_topology(language, raw_network_topology)
-        if validation_result['isValid']:
-            topology = validation_result['topology']
+        if validation_result[dict_keys.NETWORK_TOPOLOGY_IS_VALID]:
+            topology = validation_result[dict_keys.NETWORK_TOPOLOGY_TOPOLOGY]
             unpacked_topology: List[dict] = network_topology.unpack_topology(topology)
             network_topology.save_raw_network_topology_code(raw_network_topology)
             network_topology.save_unpacked_network_topology(unpacked_topology)
             self.write({'isValidAndSaved': True, 'unpackedTopology': unpacked_topology})
         else:
-            self.write({'isValidAndSaved': False, 'errorMessage': validation_result['errorMessage'],
-                        'errorData': validation_result['errorData']})
+            self.write(
+                {'isValidAndSaved': False, 'errorMessage': validation_result[dict_keys.NETWORK_TOPOLOGY_ERROR_MESSAGE],
+                 'errorData': validation_result[dict_keys.NETWORK_TOPOLOGY_ERROR_DATA]})
