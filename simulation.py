@@ -73,6 +73,14 @@ def get_simulation_node_addresses() -> Dict[str, Any]:
     return get_from_simulation_db(dict_keys.SIMULATION_NODE_ADDRESSES)
 
 
+def store_simulation_state(simulation_state: str):
+    store_to_simulation_db(dict_keys.SIMULATION_STATE, simulation_state)
+
+
+def get_simulation_state() -> str:
+    return get_from_simulation_db(dict_keys.SIMULATION_STATE)
+
+
 def clean():
     docker_interface.remove_containers(list(map(lambda node: node[dict_keys.NODE_NID], get_simulation_node_list())))
     docker_interface.remove_images(
@@ -187,16 +195,31 @@ def set_up_simulation(send_func: Callable):
     load_simulation_data()
     generate_and_store_node_addresses()
     with tempfile.TemporaryDirectory() as temp_dir:
+        store_simulation_state(simulation_values.CREATING_VIRTUAL_NETWORK_STATE)
         send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_VIRTUAL_NETWORK_STATE)
+
         create_network()
+
+        store_simulation_state(simulation_values.CREATING_PROGRAM_IMAGES_STATE)
         send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_PROGRAM_IMAGES_STATE)
+
         create_program_images(temp_dir)
+
+        store_simulation_state(simulation_values.CREATING_NODES_STATE)
         send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_NODES_STATE)
+
         create_node_containers()
+
+        store_simulation_state(simulation_values.READY_TO_RUN_STATE)
         send_func(ws_events.SIMULATION_STATE, simulation_values.READY_TO_RUN_STATE)
 
 
 def stop_and_reset_simulation(send_func: Callable):
+    store_simulation_state(simulation_values.RESETTING_STATE)
+    send_func(ws_events.SIMULATION_STATE, simulation_values.RESETTING_STATE)
+
     clean()
     clear_simulation_data()
+
+    store_simulation_state(simulation_values.UNINITIALISED_STATE)
     send_func(ws_events.SIMULATION_STATE, simulation_values.UNINITIALISED_STATE)

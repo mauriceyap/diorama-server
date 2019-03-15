@@ -37,6 +37,7 @@ SIMULATION_CONFIG: str = 'simulationConfigKey'
 SIMULATION_NODE_ADDRESSES: str = 'simulationNodeAddresses'
 SIMULATION_DATA: str = 'data'
 SIMULATION_TYPE: str = 'type'
+SIMULATION_STATE: str = 'state'
 
 NODE_ADDRESSES_NID = 'nid'
 NODE_ADDRESSES_IP_ADDRESS = 'ip_address'

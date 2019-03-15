@@ -61,7 +61,6 @@ def create_network(network_name: str, network_subnet):
 
 def create_container_and_connect(program_name: str, name: str, runtime: str, run_args: List, ip_address: str,
                                  udp_ports: List, network_name: str):
-    print([(p, 'udp') for p in udp_ports])
     DOCKER_API_CLIENT.create_container(
         program_name,
         name=name,

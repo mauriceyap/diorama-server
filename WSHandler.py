@@ -22,7 +22,10 @@ handlers: Dict[str, Callable] = {
     ws_events.GET_CUSTOM_CONFIG: (
         lambda _, send_func: send_func(ws_events.CUSTOM_CONFIG, custom_config.get_custom_config())),
     ws_events.SET_UP_SIMULATION: (lambda _, send_func: simulation.set_up_simulation(send_func)),
-    ws_events.STOP_AND_RESET_SIMULATION: (lambda _, send_func: simulation.stop_and_reset_simulation(send_func))
+    ws_events.STOP_AND_RESET_SIMULATION: (lambda _, send_func: simulation.stop_and_reset_simulation(send_func)),
+    ws_events.GET_SIMULATION_NODES: (lambda _, send_func: None),  # TODO
+    ws_events.GET_SIMULATION_STATE: (
+        (lambda _, send_func: send_func(ws_events.SIMULATION_STATE, simulation.get_simulation_state())))
 }
 
 
