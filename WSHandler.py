@@ -8,18 +8,21 @@ import network_topology
 import custom_config
 import simulation
 import dict_keys
+import ws_events
 
 handlers: Dict[str, Callable] = {
-    'addProgram': (lambda data, _: programs.add_program(data)),
-    'deleteProgram': (lambda data, _: programs.delete_program(data)),
-    'modifyProgram': (lambda data, _: programs.modify_program(data)),
-    'getPrograms': (lambda _, send_func: send_func('programs', programs.get_programs())),
-    'getRawNetworkTopology': (
-        lambda _, send_func: send_func('rawNetworkTopology', network_topology.get_raw_network_topology_code())),
-    'setCustomConfig': (lambda data, _: custom_config.set_custom_config(data)),
-    'getCustomConfig': (lambda _, send_func: send_func('customConfig', custom_config.get_custom_config())),
-    'setUpSimulation': (lambda _, send_func: simulation.set_up_simulation(send_func)),
-    'stopAndResetSimulation': (lambda _, send_func: simulation.stop_and_reset_simulation(send_func))
+    ws_events.ADD_PROGRAM: (lambda data, _: programs.add_program(data)),
+    ws_events.DELETE_PROGRAM: (lambda data, _: programs.delete_program(data)),
+    ws_events.MODIFY_PROGRAM: (lambda data, _: programs.modify_program(data)),
+    ws_events.GET_PROGRAMS: (lambda _, send_func: send_func(ws_events.PROGRAMS, programs.get_programs())),
+    ws_events.GET_RAW_NETWORK_TOPOLOGY: (
+        lambda _, send_func: send_func(ws_events.RAW_NETWORK_TOPOLOGY,
+                                       network_topology.get_raw_network_topology_code())),
+    ws_events.SET_CUSTOM_CONFIG: (lambda data, _: custom_config.set_custom_config(data)),
+    ws_events.GET_CUSTOM_CONFIG: (
+        lambda _, send_func: send_func(ws_events.CUSTOM_CONFIG, custom_config.get_custom_config())),
+    ws_events.SET_UP_SIMULATION: (lambda _, send_func: simulation.set_up_simulation(send_func)),
+    ws_events.STOP_AND_RESET_SIMULATION: (lambda _, send_func: simulation.stop_and_reset_simulation(send_func))
 }
 
 

@@ -15,6 +15,8 @@ import programs
 import custom_config
 import dict_keys
 import program_values
+import ws_events
+import simulation_values
 
 
 def get_from_simulation_db(type_key: str):
@@ -153,21 +155,21 @@ def create_network():
 
 
 def set_up_simulation(send_func: Callable):
-    send_func('simulationState', 'INITIALISING')
+    send_func(ws_events.SIMULATION_STATE, simulation_values.INITIALISING_STATE)
     clean()
     clear_simulation_data()
     load_simulation_data()
     with tempfile.TemporaryDirectory() as temp_dir:
-        send_func('simulationState', 'CREATING_VIRTUAL_NETWORK')
+        send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_VIRTUAL_NETWORK_STATE)
         create_network()
-        send_func('simulationState', 'CREATING_PROGRAM_IMAGES')
+        send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_PROGRAM_IMAGES_STATE)
         create_program_images(temp_dir)
-        # send_func('simulationState', 'CREATING_NODES')
+        # send_func('simulationState', simulation_values.CREATING_NODES_STATE)
         # create_node_containers()
-        # send_func('simulationState', 'READY_TO_RUN')
+        # send_func('simulationState', simulation_values.READY_TO_RUN_STATE)
 
 
 def stop_and_reset_simulation(send_func: Callable):
     clean()
     clear_simulation_data()
-    send_func('simulationState', 'UNINITIALISED')
+    send_func(ws_events.SIMULATION_STATE, simulation_values.UNINITIALISED_STATE)
