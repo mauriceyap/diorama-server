@@ -10,6 +10,8 @@ SET_UP_SIMULATION: str = 'setUpSimulation'
 STOP_AND_RESET_SIMULATION: str = 'stopAndResetSimulation'
 GET_SIMULATION_STATE: str = 'getSimulationState'
 GET_SIMULATION_NODES: str = 'getSimulationNodes'
+PERFORM_NODE_ACTION: str = 'performNodeAction'
+
 
 # Send
 PROGRAMS: str = 'programs'

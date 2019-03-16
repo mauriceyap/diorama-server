@@ -20,9 +20,9 @@ import simulation_values
 import util
 
 
-def get_from_simulation_db(type_key: str):
+def get_from_simulation_db(type_key: str, result_if_none=None):
     if len(database.simulation_db.search(getattr(Query(), dict_keys.SIMULATION_TYPE) == type_key)) == 0:
-        return []
+        return result_if_none
     return database.simulation_db.search(getattr(Query(), dict_keys.SIMULATION_TYPE) == type_key)[0][
         dict_keys.SIMULATION_DATA]
 
@@ -41,7 +41,7 @@ def store_simulation_node_list(simulation_nodes: List[Dict[str, Any]]):
 
 
 def get_simulation_node_list() -> List[Dict[str, Any]]:
-    return get_from_simulation_db(dict_keys.SIMULATION_NODE_LIST)
+    return get_from_simulation_db(dict_keys.SIMULATION_NODE_LIST, result_if_none=[])
 
 
 def store_simulation_program_list(simulation_programs: List[Dict[str, Any]]):
@@ -54,7 +54,7 @@ def store_simulation_program_list(simulation_programs: List[Dict[str, Any]]):
 
 
 def get_simulation_program_list() -> List[Dict[str, Any]]:
-    return get_from_simulation_db(dict_keys.SIMULATION_PROGRAM_LIST)
+    return get_from_simulation_db(dict_keys.SIMULATION_PROGRAM_LIST, result_if_none=[])
 
 
 def store_simulation_config(simulation_config: List[Dict[str, Any]]):
@@ -62,7 +62,7 @@ def store_simulation_config(simulation_config: List[Dict[str, Any]]):
 
 
 def get_simulation_config() -> Dict[str, Any]:
-    return get_from_simulation_db(dict_keys.SIMULATION_CONFIG)
+    return get_from_simulation_db(dict_keys.SIMULATION_CONFIG, result_if_none={})
 
 
 def store_simulation_node_addresses(node_addresses: List[Dict[str, Any]]):
@@ -70,7 +70,7 @@ def store_simulation_node_addresses(node_addresses: List[Dict[str, Any]]):
 
 
 def get_simulation_node_addresses() -> Dict[str, Any]:
-    return get_from_simulation_db(dict_keys.SIMULATION_NODE_ADDRESSES)
+    return get_from_simulation_db(dict_keys.SIMULATION_NODE_ADDRESSES, result_if_none={})
 
 
 def store_simulation_state(simulation_state: str):
@@ -78,7 +78,7 @@ def store_simulation_state(simulation_state: str):
 
 
 def get_simulation_state() -> str:
-    return get_from_simulation_db(dict_keys.SIMULATION_STATE)
+    return get_from_simulation_db(dict_keys.SIMULATION_STATE, result_if_none=simulation_values.UNINITIALISED_STATE)
 
 
 def clean():
@@ -223,3 +223,34 @@ def stop_and_reset_simulation(send_func: Callable):
 
     store_simulation_state(simulation_values.UNINITIALISED_STATE)
     send_func(ws_events.SIMULATION_STATE, simulation_values.UNINITIALISED_STATE)
+
+
+def get_simulation_nodes():
+    if get_simulation_state() not in [simulation_values.READY_TO_RUN_STATE, simulation_values.RUNNING_STATE]:
+        return []
+    nodes = get_simulation_node_list()
+    program_list = get_simulation_program_list()
+    program_runtimes: Dict[str, str] = {p[dict_keys.PROGRAM_NAME]: p[dict_keys.PROGRAM_RUNTIME] for p in
+                                        program_list}
+    program_descriptions: Dict[str, str] = {p[dict_keys.PROGRAM_NAME]: p[dict_keys.PROGRAM_DESCRIPTION] for p in
+                                            program_list}
+    statuses: Dict[str, str] = docker_interface.get_container_statuses(
+        list(map(lambda n: n[dict_keys.NODE_NID], nodes)))
+    simulation_nodes: List[Dict[str, Any]] = []
+    for node in nodes:
+        nid: str = node[dict_keys.NODE_NID]
+        program: str = node[dict_keys.NODE_PROGRAM]
+        simulation_nodes.append({
+            dict_keys.NODE_NID: nid,
+            dict_keys.CONTAINER_STATUS: statuses[nid],
+            dict_keys.NODE_PROGRAM: node[dict_keys.NODE_PROGRAM],
+            dict_keys.PROGRAM_RUNTIME: program_runtimes[program],
+            dict_keys.PROGRAM_DESCRIPTION: program_descriptions[program]
+        })
+    return simulation_nodes
+
+
+def perform_node_action(data: Dict[str, str]):
+    nid = data[dict_keys.NODE_NID]
+    action = data[dict_keys.NODE_ACTION]
+    docker_interface.action_container(nid, action)

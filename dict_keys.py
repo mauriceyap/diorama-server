@@ -29,6 +29,7 @@ PROGRAM_NAME = 'name'
 PROGRAM_CODE_SOURCE = 'codeSource'
 PROGRAM_CODE_DATA = 'codeData'
 PROGRAM_RUNTIME = 'runtime'
+PROGRAM_DESCRIPTION = 'description'
 PROGRAM_MAIN_HANDLER = 'mainHandler'
 
 SIMULATION_NODE_LIST: str = 'simulationNodeList'
@@ -43,5 +44,12 @@ NODE_ADDRESSES_NID = 'nid'
 NODE_ADDRESSES_IP_ADDRESS = 'ip_address'
 NODE_ADDRESSES_PORT = 'port'
 
+CONTAINER_STATUS = 'status'
+
+LOG_TIMESTAMP = 'timestamp'
+LOG_MESSAGE = 'message'
+
 RUNTIME_DATA_WORKING_DIRECTORY = 'workingDirectory'
 RUNTIME_DATA_RUN_COMMAND = 'runCommand'
+
+NODE_ACTION: str = 'action'
