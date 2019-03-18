@@ -35,15 +35,17 @@ handlers: Dict[str, Callable] = {
     ws_events.GET_SIMULATION_STATE:
         (lambda _, send_func: send_func(ws_events.SIMULATION_STATE, simulation.get_simulation_state())),
     ws_events.PERFORM_NODE_ACTION:
-        (lambda data, _: simulation.perform_node_action(data))
+        (lambda data, send_func: simulation.perform_node_action(data))
 }
 
 
-def handle(event: str, data, send_func: Callable):
-    handlers[event](data, send_func)
+def handle(event: str, data):
+    handlers[event](data, WSHandler.send_message)
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
+    live_web_sockets = set()
+
     @staticmethod
     def parse_message(message):
         message_dict = json.loads(message)
@@ -54,14 +56,23 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         pass
 
     def open(self):
+        self.live_web_sockets.add(self)
         print('new ws connection')
 
     def on_message(self, message):
         event, data = self.parse_message(message)
-        handle(event, data, self.send_message)
+        handle(event, data)
 
-    def send_message(self, event, data):
-        self.write_message(json.dumps({dict_keys.WS_EVENT: event, dict_keys.WS_DATA: json.dumps(data)}))
+    @classmethod
+    def send_message(cls, event, data):
+        removable = set()
+        for ws in cls.live_web_sockets:
+            if not ws.ws_connection or not ws.ws_connection.stream.socket:
+                removable.add(ws)
+            else:
+                ws.write_message(json.dumps({dict_keys.WS_EVENT: event, dict_keys.WS_DATA: json.dumps(data)}))
+        for ws in removable:
+            cls.live_web_sockets.remove(ws)
 
     def on_close(self):
         print('ws connection closed')

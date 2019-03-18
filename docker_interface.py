@@ -1,10 +1,11 @@
 from typing import List, Dict, Any
 
 import docker
-from docker.errors import NotFound
+from docker.errors import APIError, NotFound
 from docker.models.networks import Network
 from docker.models.containers import Container
 from docker.types import IPAMConfig, IPAMPool
+from tornado.httpclient import AsyncHTTPClient
 
 import dict_keys
 import constants
@@ -98,5 +99,9 @@ def action_container(name: str, action: str):
     try:
         container: Container = DOCKER_CLIENT.containers.get(name)
         getattr(container, action)()
+        if action == 'start':
+            AsyncHTTPClient().fetch(f"{constants.LOGGING_SERVER_START_LOGGING_URL}/{name}")
     except NotFound:
+        pass
+    except APIError:
         pass

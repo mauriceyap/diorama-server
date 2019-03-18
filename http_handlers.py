@@ -6,6 +6,8 @@ import tornado.web
 import network_topology
 import programs
 import dict_keys
+import ws_events
+from WSHandler import WSHandler
 
 
 class GeneralHTTPHandler(tornado.web.RequestHandler):
@@ -32,6 +34,11 @@ class ZipFileUploadHandler(GeneralHTTPHandler):
     def post(self, program_name: str):
         programs.write_zip_file(program_name, self.request.body)
         self.write('Upload successful')
+
+
+class LoggingMessageHandler(GeneralHTTPHandler):
+    def post(self):
+        WSHandler.send_message(ws_events.SIMULATION_LOGS, json.loads(self.request.body))
 
 
 class SaveNetworkTopologyHandler(GeneralHTTPHandler):
