@@ -53,3 +53,5 @@ RUNTIME_DATA_WORKING_DIRECTORY = 'workingDirectory'
 RUNTIME_DATA_RUN_COMMAND = 'runCommand'
 
 NODE_ACTION: str = 'action'
+
+STREAM_SINCE: str = 'since'

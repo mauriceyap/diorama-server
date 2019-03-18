@@ -11,6 +11,7 @@ STOP_AND_RESET_SIMULATION: str = 'stopAndResetSimulation'
 GET_SIMULATION_STATE: str = 'getSimulationState'
 GET_SIMULATION_NODES: str = 'getSimulationNodes'
 PERFORM_NODE_ACTION: str = 'performNodeAction'
+STREAM_NODE_LOGS: str = 'streamNodeLogs'
 
 
 # Send

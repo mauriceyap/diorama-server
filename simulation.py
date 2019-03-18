@@ -254,3 +254,14 @@ def perform_node_action(data: Dict[str, str]):
     nid = data[dict_keys.NODE_NID]
     action = data[dict_keys.NODE_ACTION]
     docker_interface.action_container(nid, action)
+
+
+def stream_node_logs(data: Dict[str, str]):
+    if 'all' in data:
+        for nid in map(lambda node: node[dict_keys.NODE_NID], get_simulation_node_list()):
+            docker_interface.stream_container_logs(nid, None)
+    else:
+        docker_interface.stream_container_logs(data[dict_keys.NODE_NID],
+                                               (data[dict_keys.STREAM_SINCE]
+                                                if dict_keys.STREAM_SINCE in data
+                                                else None))

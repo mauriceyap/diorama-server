@@ -35,7 +35,9 @@ handlers: Dict[str, Callable] = {
     ws_events.GET_SIMULATION_STATE:
         (lambda _, send_func: send_func(ws_events.SIMULATION_STATE, simulation.get_simulation_state())),
     ws_events.PERFORM_NODE_ACTION:
-        (lambda data, send_func: simulation.perform_node_action(data))
+        (lambda data, send_func: simulation.perform_node_action(data)),
+    ws_events.STREAM_NODE_LOGS:
+        (lambda data, _: simulation.stream_node_logs(data))
 }
 
 
