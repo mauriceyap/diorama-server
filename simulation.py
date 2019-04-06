@@ -159,7 +159,7 @@ def get_code_for_program(program, temp_dir):
     elif code_source == program_values.CODE_SOURCE_ZIP:
         pass
         # TODO
-    elif code_source == program_values.CODE_SOURCE_ZIP:
+    elif code_source == program_values.CODE_SOURCE_GIT:
         # TODO
         pass
 
@@ -195,23 +195,27 @@ def set_up_simulation(send_func: Callable):
     load_simulation_data()
     generate_and_store_node_addresses()
     with tempfile.TemporaryDirectory() as temp_dir:
-        store_simulation_state(simulation_values.CREATING_VIRTUAL_NETWORK_STATE)
-        send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_VIRTUAL_NETWORK_STATE)
+        try:
+            store_simulation_state(simulation_values.CREATING_VIRTUAL_NETWORK_STATE)
+            send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_VIRTUAL_NETWORK_STATE)
 
-        create_network()
+            create_network()
 
-        store_simulation_state(simulation_values.CREATING_PROGRAM_IMAGES_STATE)
-        send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_PROGRAM_IMAGES_STATE)
+            store_simulation_state(simulation_values.CREATING_PROGRAM_IMAGES_STATE)
+            send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_PROGRAM_IMAGES_STATE)
 
-        create_program_images(temp_dir)
+            create_program_images(temp_dir)
 
-        store_simulation_state(simulation_values.CREATING_NODES_STATE)
-        send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_NODES_STATE)
+            store_simulation_state(simulation_values.CREATING_NODES_STATE)
+            send_func(ws_events.SIMULATION_STATE, simulation_values.CREATING_NODES_STATE)
 
-        create_node_containers()
+            create_node_containers()
 
-        store_simulation_state(simulation_values.READY_TO_RUN_STATE)
-        send_func(ws_events.SIMULATION_STATE, simulation_values.READY_TO_RUN_STATE)
+            store_simulation_state(simulation_values.READY_TO_RUN_STATE)
+            send_func(ws_events.SIMULATION_STATE, simulation_values.READY_TO_RUN_STATE)
+        except Exception as e:
+            print(e)
+            stop_and_reset_simulation(send_func)
 
 
 def stop_and_reset_simulation(send_func: Callable):
