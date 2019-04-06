@@ -159,10 +159,12 @@ def initialise_unpacked_network_topology():
 
 
 def get_unpacked_network_topology() -> List[Dict]:
-    if len(database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_UNPACKED_TYPE)) == 0:
+    if len(database.network_topology_db.search(
+            Query().type == network_topology_values.NETWORK_TOPOLOGY_UNPACKED_TYPE)) == 0:
         initialise_unpacked_network_topology()
-    return database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_UNPACKED_TYPE)[0][
-        dict_keys.NETWORK_TOPOLOGY_DATA]
+    return \
+        database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_UNPACKED_TYPE)[0][
+            dict_keys.NETWORK_TOPOLOGY_DATA]
 
 
 def save_raw_network_topology_code(raw: str):
@@ -177,7 +179,9 @@ def initialise_raw_network_topology_code():
 
 
 def get_raw_network_topology_code() -> List[Dict]:
-    if len(database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)) == 0:
+    if len(database.network_topology_db.search(
+            Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)) == 0:
         initialise_raw_network_topology_code()
-    return database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)[0][
+    return \
+    database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)[0][
         dict_keys.NETWORK_TOPOLOGY_DATA]
