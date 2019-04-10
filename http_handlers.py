@@ -55,6 +55,7 @@ class SaveNetworkTopologyHandler(GeneralHTTPHandler):
             unpacked_topology: List[dict] = network_topology.unpack_topology(topology)
             network_topology.save_raw_network_topology_code(raw_network_topology)
             network_topology.save_unpacked_network_topology(unpacked_topology)
+            network_topology.save_raw_network_topology_language(language)
             self.write({'isValidAndSaved': True, 'unpackedTopology': unpacked_topology})
         else:
             self.write(

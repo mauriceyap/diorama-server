@@ -1,6 +1,7 @@
 from typing import Dict, List, TypeVar, Any
 
 K = TypeVar('K')
+V = TypeVar('V')
 
 
 def combine_dict_lists_by_key(dict_lists: List[List[Dict[K, Any]]], key: K):
@@ -14,3 +15,7 @@ def combine_dict_lists_by_key(dict_lists: List[List[Dict[K, Any]]], key: K):
             map_by_key[d.get(key)] = new_d
 
     return map_by_key.values()
+
+
+def dicts_are_equal(a: Dict[K, V], b: Dict[K, V]) -> bool:
+    return sorted(a.items(), key=(lambda x: x[0])) == sorted(b.items(), key=(lambda x: x[0]))

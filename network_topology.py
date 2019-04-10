@@ -8,6 +8,7 @@ import database
 import constants
 import dict_keys
 import network_topology_values
+import custom_config
 
 ERROR_MESSAGE_PARSING = "NT_ERROR_PARSING"
 ERROR_MESSAGE_MUST_BE_MAP = "NT_ERROR_MAP_TYPE"
@@ -19,7 +20,7 @@ ERROR_MESSAGE_SINGLE_NODES_NID_STRING_TYPE = "NT_ERROR_NID_SINGLE_NODES_NOT_STRI
 ERROR_MESSAGE_SINGLE_NODES_PROGRAM_STRING_TYPE = "NT_ERROR_PROGRAM_SINGLE_NODES_NOT_STRING"
 ERROR_MESSAGE_SINGLE_NODES_CONNECTIONS_LIST_OF_STRING_TYPE = "NT_ERROR_CONNECTIONS_SINGLE_NODES_NOT_LIST_OF_STRINGS"
 VALID_BASE_KEYS: List[str] = [dict_keys.NETWORK_TOPOLOGY_SINGLE_NODES, dict_keys.NETWORK_TOPOLOGY_NODE_GROUPS]
-SINGLE_TYPE_NODE_GROUPS: List[str] = ['line', 'bus', 'ring', 'fully_connected']
+SINGLE_TYPE_NODE_GROUPS: List[str] = ['line', 'ring', 'fully_connected']
 
 
 class NetworkTopologyValidationException(Exception):
@@ -129,13 +130,95 @@ def validate_raw_topology(language: str, raw: str) -> Dict[str, Any]:
         }
 
 
-def unpack_topology(topology: Dict) -> List[Dict]:
-    nodes = topology[dict_keys.NETWORK_TOPOLOGY_SINGLE_NODES]
-    # TODO: node groups
+def add_line_group_connections(nodes: List[Dict[str, Any]]):
+    for index in range(1, len(nodes)):
+        nodes[index][dict_keys.NODE_CONNECTIONS] = [nodes[index - 1][dict_keys.NODE_NID]]
 
+
+def add_ring_group_connections(nodes: List[Dict[str, Any]]):
+    add_line_group_connections(nodes)
+    nodes[0][dict_keys.NODE_CONNECTIONS] = [nodes[-1][dict_keys.NODE_NID]]
+
+
+def add_fully_connected_group_connections(nodes: List[Dict[str, Any]]):
+    for index in range(0, len(nodes)):
+        nodes[index][dict_keys.NODE_CONNECTIONS] = [node[dict_keys.NODE_NID] for node in nodes[(index + 1):]]
+
+
+add_connection_functions: Dict[str, Callable[[List[Dict[str, Any]]], None]] = {
+    'line': add_line_group_connections,
+    'ring': add_ring_group_connections,
+}
+
+
+def generate_single_type_node_group(nids: List[str], program: str, group_type: str) -> List[Dict[str, Any]]:
+    nodes: List[Dict[str, Any]] = list(
+        map(lambda nid: {dict_keys.NODE_NID: nid, dict_keys.NODE_PROGRAM: program}, nids))
+    add_connection_functions[group_type](nodes)
+    return nodes
+
+
+def unpack_node_groups(node_groups: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    nodes = []
+    for group in node_groups:
+        group_nodes = []
+        group_type: str = group[dict_keys.NETWORK_TOPOLOGY_GROUP_TYPE]
+        if group_type in SINGLE_TYPE_NODE_GROUPS:
+            program: str = group[dict_keys.NODE_PROGRAM]
+            number_nodes: int = group[dict_keys.NETWORK_TOPOLOGY_GROUP_NUMBER_NODES]
+            nid_prefix: str = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_NID_PREFIX]
+                               if dict_keys.NETWORK_TOPOLOGY_GROUP_NID_PREFIX in group
+                               else constants.DEFAULT_NID_PREFIX)
+            nid_suffix: str = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_NID_SUFFIX]
+                               if dict_keys.NETWORK_TOPOLOGY_GROUP_NID_SUFFIX in group
+                               else constants.DEFAULT_NID_SUFFIX)
+            nid_starting_number: int = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_NID_STARTING_NUMBER]
+                                        if dict_keys.NETWORK_TOPOLOGY_GROUP_NID_STARTING_NUMBER in group
+                                        else constants.DEFAULT_NID_STARTING_NUMBER)
+            nid_number_increment: int = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_NID_NUMBER_INCREMENT]
+                                         if dict_keys.NETWORK_TOPOLOGY_GROUP_NID_NUMBER_INCREMENT in group
+                                         else constants.DEFAULT_NID_NUMBER_INCREMENT)
+            nids: List[str] = [f'{nid_prefix}{nid_starting_number + node_index * nid_number_increment}{nid_suffix}' for
+                               node_index in range(0, number_nodes)]
+            group_nodes.extend(generate_single_type_node_group(nids, program, group_type))
+        elif group_type == 'star':
+            pass  # TODO
+        elif group_type == 'tree':
+            pass  # TODO
+
+        for node in group_nodes:
+            if dict_keys.NODE_CONNECTIONS not in node:
+                node[dict_keys.NODE_CONNECTIONS] = []
+
+        if dict_keys.NETWORK_TOPOLOGY_GROUP_CONNECTIONS in group:
+            for connection in group[dict_keys.NETWORK_TOPOLOGY_GROUP_CONNECTIONS]:
+                nid_from: str = connection[dict_keys.NETWORK_TOPOLOGY_GROUP_CONNECTIONS_FROM]
+                nid_to: str = connection[dict_keys.NETWORK_TOPOLOGY_GROUP_CONNECTIONS_TO]
+                for node in group_nodes:
+                    if node[dict_keys.NODE_NID] == nid_from:
+                        node[dict_keys.NODE_CONNECTIONS].extend([nid_to])
+                    elif node[dict_keys.NODE_NID] == nid_to:
+                        node[dict_keys.NODE_CONNECTIONS].extend([nid_from])
+        nodes.extend(group_nodes)
+
+    return nodes
+
+
+def unpack_topology(topology: Dict[str, Any]) -> List[Dict[str, Any]]:
+    single_nodes = (topology[dict_keys.NETWORK_TOPOLOGY_SINGLE_NODES].copy()
+                    if dict_keys.NETWORK_TOPOLOGY_SINGLE_NODES in topology
+                    else [])
+    group_nodes = (unpack_node_groups(topology[dict_keys.NETWORK_TOPOLOGY_NODE_GROUPS])
+                   if dict_keys.NETWORK_TOPOLOGY_NODE_GROUPS in topology
+                   else [])
+
+    is_nodes_self_connected = custom_config.get_custom_config()[dict_keys.CUSTOM_CONFIG_SELF_CONNECTED_NODES]
+    nodes = single_nodes + group_nodes
     for node in nodes:
         if dict_keys.NODE_CONNECTIONS not in node:
             node[dict_keys.NODE_CONNECTIONS] = []
+        if is_nodes_self_connected:
+            node[dict_keys.NODE_CONNECTIONS] = list(set(node[dict_keys.NODE_CONNECTIONS] + [node[dict_keys.NODE_NID]]))
 
     for node in nodes:
         peer_nids = node[dict_keys.NODE_CONNECTIONS]
@@ -145,6 +228,13 @@ def unpack_topology(topology: Dict) -> List[Dict]:
                 set(peer_node[dict_keys.NODE_CONNECTIONS] + [node[dict_keys.NODE_NID]]))
 
     return nodes
+
+
+def update_unpacked_topology_with_self_connected_nodes():
+    language = get_raw_network_topology_language()
+    raw = get_raw_network_topology_code()
+    topology = parsers[language](raw)
+    save_unpacked_network_topology(unpack_topology(topology))
 
 
 def save_unpacked_network_topology(unpacked_topology: List[Dict]):
@@ -183,5 +273,26 @@ def get_raw_network_topology_code() -> List[Dict]:
             Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)) == 0:
         initialise_raw_network_topology_code()
     return \
-    database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)[0][
-        dict_keys.NETWORK_TOPOLOGY_DATA]
+        database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_CODE_TYPE)[0][
+            dict_keys.NETWORK_TOPOLOGY_DATA]
+
+
+def save_raw_network_topology_language(language: str):
+    database.network_topology_db.upsert(
+        {dict_keys.NETWORK_TOPOLOGY_TYPE: network_topology_values.NETWORK_TOPOLOGY_RAW_LANGUAGE_TYPE,
+         dict_keys.NETWORK_TOPOLOGY_DATA: language},
+        Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_LANGUAGE_TYPE)
+
+
+def initialise_raw_network_topology_language():
+    save_raw_network_topology_code(constants.DEFAULT_RAW_NETWORK_TOPOLOGY_LANGUAGE)
+
+
+def get_raw_network_topology_language() -> str:
+    if len(database.network_topology_db.search(
+            Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_LANGUAGE_TYPE)) == 0:
+        initialise_raw_network_topology_code()
+    return \
+        database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_LANGUAGE_TYPE)[
+            0][
+            dict_keys.NETWORK_TOPOLOGY_DATA]

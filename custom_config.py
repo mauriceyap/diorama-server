@@ -23,6 +23,6 @@ def get_custom_config():
 
 
 def set_custom_config(custom_config):
-    return database.custom_config_db.upsert(
+    database.custom_config_db.upsert(
         {dict_keys.CUSTOM_CONFIG: custom_config, dict_keys.ID: dict_keys.SINGLETON_ID},
         GET_SINGLETON_QUERY)
