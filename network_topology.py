@@ -158,6 +158,14 @@ def generate_single_type_node_group(nids: List[str], program: str, group_type: s
     return nodes
 
 
+def generate_star_node_group(host_nids: List[str], host_program: str, hub_nid: str, hub_program: str):
+    hub_node: Dict[str, Any] = {dict_keys.NODE_NID: hub_nid, dict_keys.NODE_PROGRAM: hub_program}
+    host_nodes: List[Dict[str, Any]] = list(
+        map(lambda nid: {dict_keys.NODE_NID: nid, dict_keys.NODE_PROGRAM: host_program,
+                         dict_keys.NODE_CONNECTIONS: [hub_nid]}, host_nids))
+    return [hub_node] + host_nodes
+
+
 def unpack_node_groups(node_groups: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     nodes = []
     for group in node_groups:
@@ -182,7 +190,27 @@ def unpack_node_groups(node_groups: List[Dict[str, Any]]) -> List[Dict[str, Any]
                                node_index in range(0, number_nodes)]
             group_nodes.extend(generate_single_type_node_group(nids, program, group_type))
         elif group_type == 'star':
-            pass  # TODO
+            hub_nid: str = group[dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HUB_NID]
+            hub_program: str = group[dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HUB_PROGRAM]
+            number_hosts: int = group[dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_NUMBER_HOSTS]
+            host_program: str = group[dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_PROGRAM]
+            host_nid_prefix: str = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_PREFIX]
+                                    if dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_PREFIX in group
+                                    else constants.DEFAULT_NID_PREFIX)
+            host_nid_suffix: str = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_SUFFIX]
+                                    if dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_SUFFIX in group
+                                    else constants.DEFAULT_NID_SUFFIX)
+            host_nid_starting_number: int = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_STARTING_NUMBER]
+                                             if dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_STARTING_NUMBER in group
+                                             else constants.DEFAULT_NID_STARTING_NUMBER)
+            host_nid_number_increment: int = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_NUMBER_INCREMENT]
+                                              if dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_NUMBER_INCREMENT in group
+                                              else constants.DEFAULT_NID_NUMBER_INCREMENT)
+            host_nids: List[str] = [f'{host_nid_prefix}'
+                                    f'{host_nid_starting_number + host_node_index * host_nid_number_increment}'
+                                    f'{host_nid_suffix}'
+                                    for host_node_index in range(0, number_hosts)]
+            group_nodes.extend(generate_star_node_group(host_nids, host_program, hub_nid, hub_program))
         elif group_type == 'tree':
             pass  # TODO
 
