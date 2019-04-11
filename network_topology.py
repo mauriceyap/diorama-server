@@ -9,6 +9,7 @@ import constants
 import dict_keys
 import network_topology_values
 import custom_config
+import util
 
 ERROR_MESSAGE_PARSING = "NT_ERROR_PARSING"
 ERROR_MESSAGE_MUST_BE_MAP = "NT_ERROR_MAP_TYPE"
@@ -158,12 +159,40 @@ def generate_single_type_node_group(nids: List[str], program: str, group_type: s
     return nodes
 
 
-def generate_star_node_group(host_nids: List[str], host_program: str, hub_nid: str, hub_program: str):
+def generate_star_node_group(host_nids: List[str], host_program: str, hub_nid: str,
+                             hub_program: str) -> List[Dict[str, Any]]:
     hub_node: Dict[str, Any] = {dict_keys.NODE_NID: hub_nid, dict_keys.NODE_PROGRAM: hub_program}
     host_nodes: List[Dict[str, Any]] = list(
         map(lambda nid: {dict_keys.NODE_NID: nid, dict_keys.NODE_PROGRAM: host_program,
                          dict_keys.NODE_CONNECTIONS: [hub_nid]}, host_nids))
     return [hub_node] + host_nodes
+
+
+def generate_tree_nids(number_levels: int, number_children: int, nid_prefixes: List[str],
+                       nid_starting_numbers: List[int], nid_number_increments: List[int],
+                       nid_suffixes: List[str]) -> List[List[str]]:
+    tree_nids = []
+    for level in range(0, number_levels):
+        prefix: str = nid_prefixes[level]
+        starting_number: int = nid_starting_numbers[level]
+        increment: int = nid_number_increments[level]
+        suffix: str = nid_suffixes[level]
+        tree_nids.append([f'{prefix}{starting_number + node_index * increment}{suffix}'
+                          for node_index in range(0, number_children ** level)])
+    return tree_nids
+
+
+def generate_tree_node_group(nids_for_each_level: List[List[str]], programs: List[str], number_levels: int,
+                             number_children: int) -> List[Dict[str, Any]]:
+    nodes_for_each_level: List[List[Dict[str, Any]]] = [
+        [{dict_keys.NODE_NID: nids_for_each_level[level][index_in_level],
+          dict_keys.NODE_PROGRAM: programs[level],
+          dict_keys.NODE_CONNECTIONS: ([nids_for_each_level[level - 1][index_in_level // number_children]]
+                                       if level > 0 else [])
+          } for index_in_level in range(0, len(nids_for_each_level[level]))
+         ]
+        for level in range(0, number_levels)]
+    return util.flatten(nodes_for_each_level)
 
 
 def unpack_node_groups(node_groups: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -204,7 +233,8 @@ def unpack_node_groups(node_groups: List[Dict[str, Any]]) -> List[Dict[str, Any]
                                              if dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_STARTING_NUMBER in group
                                              else constants.DEFAULT_NID_STARTING_NUMBER)
             host_nid_number_increment: int = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_NUMBER_INCREMENT]
-                                              if dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_NUMBER_INCREMENT in group
+                                              if (dict_keys.NETWORK_TOPOLOGY_GROUP_STAR_HOST_NID_NUMBER_INCREMENT
+                                                  in group)
                                               else constants.DEFAULT_NID_NUMBER_INCREMENT)
             host_nids: List[str] = [f'{host_nid_prefix}'
                                     f'{host_nid_starting_number + host_node_index * host_nid_number_increment}'
@@ -212,7 +242,23 @@ def unpack_node_groups(node_groups: List[Dict[str, Any]]) -> List[Dict[str, Any]
                                     for host_node_index in range(0, number_hosts)]
             group_nodes.extend(generate_star_node_group(host_nids, host_program, hub_nid, hub_program))
         elif group_type == 'tree':
-            pass  # TODO
+            number_levels: int = group[dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_NUMBER_LEVELS]
+            number_children: int = group[dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_NUMBER_CHILDREN]
+            programs: List[str] = group[dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_PROGRAMS]
+            nid_prefixes: List[str] = group[dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_NID_PREFIXES]
+            nid_starting_numbers: List[int] = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_NID_STARTING_NUMBERS]
+                                               if dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_NID_STARTING_NUMBERS in group
+                                               else [constants.DEFAULT_NID_STARTING_NUMBER] * number_levels)
+            nid_number_increments: List[int] = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_NID_NUMBER_INCREMENTS]
+                                                if dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_NID_NUMBER_INCREMENTS in group
+                                                else [constants.DEFAULT_NID_NUMBER_INCREMENT] * number_levels)
+            nid_suffixes: List[str] = (group[dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_NID_SUFFIXES]
+                                       if dict_keys.NETWORK_TOPOLOGY_GROUP_TREE_NID_SUFFIXES in group
+                                       else [constants.DEFAULT_NID_SUFFIX] * number_levels)
+            nids_for_each_level: List[List[str]] = generate_tree_nids(number_levels, number_children, nid_prefixes,
+                                                                      nid_starting_numbers, nid_number_increments,
+                                                                      nid_suffixes)
+            group_nodes.extend(generate_tree_node_group(nids_for_each_level, programs, number_levels, number_children))
 
         for node in group_nodes:
             if dict_keys.NODE_CONNECTIONS not in node:

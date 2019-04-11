@@ -3,6 +3,8 @@ from typing import Dict, List, TypeVar, Any
 K = TypeVar('K')
 V = TypeVar('V')
 
+T = TypeVar('T')
+
 
 def combine_dict_lists_by_key(dict_lists: List[List[Dict[K, Any]]], key: K):
     map_by_key: Dict[K, Dict] = {}
@@ -19,3 +21,7 @@ def combine_dict_lists_by_key(dict_lists: List[List[Dict[K, Any]]], key: K):
 
 def dicts_are_equal(a: Dict[K, V], b: Dict[K, V]) -> bool:
     return sorted(a.items(), key=(lambda x: x[0])) == sorted(b.items(), key=(lambda x: x[0]))
+
+
+def flatten(l: List[List[T]]) -> List[T]:
+    return [item for sublist in l for item in sublist]
