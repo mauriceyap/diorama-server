@@ -162,6 +162,7 @@ def add_fully_connected_group_connections(nodes: List[Dict[str, Any]]):
 add_connection_functions: Dict[str, Callable[[List[Dict[str, Any]]], None]] = {
     'line': add_line_group_connections,
     'ring': add_ring_group_connections,
+    'fully_connected': add_fully_connected_group_connections
 }
 
 
