@@ -1,4 +1,5 @@
 from typing import Dict, Callable, Any, List
+import re
 
 import yaml
 import json
@@ -20,7 +21,9 @@ ERROR_MESSAGE_NO_PROGRAM_IN_SINGLE_NODES_ITEM = "NT_ERROR_NO_PROGRAM_SINGLE_NODE
 ERROR_MESSAGE_SINGLE_NODES_NID_STRING_TYPE = "NT_ERROR_NID_SINGLE_NODES_NOT_STRING"
 ERROR_MESSAGE_SINGLE_NODES_PROGRAM_STRING_TYPE = "NT_ERROR_PROGRAM_SINGLE_NODES_NOT_STRING"
 ERROR_MESSAGE_SINGLE_NODES_CONNECTIONS_LIST_OF_STRING_TYPE = "NT_ERROR_CONNECTIONS_SINGLE_NODES_NOT_LIST_OF_STRINGS"
+ERROR_MESSAGE_INVALID_NID = "NT_ERROR_INVALID_NID"
 VALID_BASE_KEYS: List[str] = [dict_keys.NETWORK_TOPOLOGY_SINGLE_NODES, dict_keys.NETWORK_TOPOLOGY_NODE_GROUPS]
+VALID_NID_REGEX: str = r'^[a-zA-Z0-9][a-zA-Z0-9_\.\-]+$'
 SINGLE_TYPE_NODE_GROUPS: List[str] = ['line', 'ring', 'fully_connected']
 
 
@@ -90,6 +93,13 @@ def confirm_single_nodes_connections_list_of_strings_type(single_nodes: List[Dic
                                                              index + 1)
 
 
+def confirm_single_nodes_have_valid_nids(single_nodes: List[Dict[str, Any]]):
+    for node in single_nodes:
+        nid = node[dict_keys.NODE_NID]
+        if not re.match(VALID_NID_REGEX, nid):
+            raise NetworkTopologyValidationException(ERROR_MESSAGE_INVALID_NID, nid)
+
+
 def validate_topology(topology):
     confirm_topology_is_a_dict(topology)
     confirm_all_base_keys_are_valid(topology)
@@ -102,7 +112,10 @@ def validate_topology(topology):
     confirm_single_nodes_nid_string_type(single_nodes)
     confirm_single_nodes_program_string_type(single_nodes)
     confirm_single_nodes_connections_list_of_strings_type(single_nodes)
+    confirm_single_nodes_have_valid_nids(single_nodes)
     # TODO: more validation
+
+    # TODO: nid validation for group nodes [a-zA-Z0-9][a-zA-Z0-9_.-]+
 
 
 parsers: Dict[str, Callable] = {'YAML': lambda raw: yaml.load(raw, Loader=yaml.FullLoader), 'JSON': json.loads}
