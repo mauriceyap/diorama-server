@@ -56,6 +56,7 @@ class SaveNetworkTopologyHandler(GeneralHTTPHandler):
             network_topology.save_raw_network_topology_code(raw_network_topology)
             network_topology.save_unpacked_network_topology(unpacked_topology)
             network_topology.save_raw_network_topology_language(language)
+            network_topology.save_initial_connection_parameters()
             self.write({'isValidAndSaved': True, 'unpackedTopology': unpacked_topology})
         else:
             self.write(

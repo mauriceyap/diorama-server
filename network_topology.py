@@ -384,3 +384,46 @@ def get_raw_network_topology_language() -> str:
         database.network_topology_db.search(Query().type == network_topology_values.NETWORK_TOPOLOGY_RAW_LANGUAGE_TYPE)[
             0][
             dict_keys.NETWORK_TOPOLOGY_DATA]
+
+
+def save_connection_parameters(connection_parameters: Dict[str, Dict[str, Dict[str, Any]]]):
+    database.network_topology_db.upsert(
+        {dict_keys.NETWORK_TOPOLOGY_TYPE: network_topology_values.NETWORK_TOPOLOGY_CONNECTION_PARAMETERS_TYPE,
+         dict_keys.NETWORK_TOPOLOGY_DATA: connection_parameters},
+        Query().type == network_topology_values.NETWORK_TOPOLOGY_CONNECTION_PARAMETERS_TYPE
+    )
+
+
+def initialise_connection_parameters():
+    save_connection_parameters({})
+
+
+def get_connection_parameters() -> Dict[str, Dict[str, Dict[str, Any]]]:
+    if len(database.network_topology_db.search(
+            Query().type == network_topology_values.NETWORK_TOPOLOGY_CONNECTION_PARAMETERS_TYPE)) == 0:
+        initialise_connection_parameters()
+    return \
+        database.network_topology_db.search(
+            Query().type == network_topology_values.NETWORK_TOPOLOGY_CONNECTION_PARAMETERS_TYPE)[
+            0][
+            dict_keys.NETWORK_TOPOLOGY_DATA]
+
+
+def save_initial_connection_parameters():
+    unpacked_topology: List[dict] = get_unpacked_network_topology()
+    connection_parameters: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    for node in unpacked_topology:
+        nid = node[dict_keys.NODE_NID]
+        connections = node[dict_keys.NODE_CONNECTIONS]
+        for connection_nid in connections:
+            if connection_nid > nid:
+                if nid not in connection_parameters:
+                    connection_parameters[nid] = {}
+                connection_parameters[nid][connection_nid] = constants.DEFAULT_CONNECTION_PARAMETERS
+    save_connection_parameters(connection_parameters)
+
+
+def modify_connection_parameters(from_nid: str, to_nid: str, parameters: Dict[str, Any]):
+    connection_parameters: Dict[str, Dict[str, Dict[str, Any]]] = get_connection_parameters()
+    connection_parameters[from_nid][to_nid] = parameters
+    save_connection_parameters(connection_parameters)

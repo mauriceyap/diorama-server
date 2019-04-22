@@ -36,6 +36,13 @@ handlers: Dict[str, Callable] = {
     ws_events.GET_UNPACKED_NETWORK_TOPOLOGY: (
         lambda _, send_func: send_func(ws_events.UNPACKED_NETWORK_TOPOLOGY,
                                        network_topology.get_unpacked_network_topology())),
+    ws_events.GET_CONNECTION_PARAMETERS:
+        (lambda _, send_func: send_func(ws_events.CONNECTION_PARAMETERS, network_topology.get_connection_parameters())),
+    ws_events.MODIFY_CONNECTION_PARAMETERS:
+        (lambda data, _: network_topology.modify_connection_parameters(
+            data[dict_keys.MODIFY_NODE_CONNECTIONS_FROM_NID],
+            data[dict_keys.MODIFY_NODE_CONNECTIONS_TO_NID],
+            data[dict_keys.MODIFY_NODE_CONNECTIONS_PARAMETERS])),
     ws_events.SET_CUSTOM_CONFIG: set_custom_config_handler,
     ws_events.GET_CUSTOM_CONFIG:
         (lambda _, send_func: send_func(ws_events.CUSTOM_CONFIG, custom_config.get_custom_config())),
