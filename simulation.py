@@ -108,10 +108,10 @@ def load_simulation_data():
 
 def create_node_containers():
     programs_by_name = {program[dict_keys.PROGRAM_NAME]: program for program in get_simulation_program_list()}
-    nodes = get_simulation_node_list()
+    simulation_nodes: List[Dict[str, Any]] = get_simulation_node_list()
     node_addresses = get_simulation_node_addresses()
-    nodes_with_addresses = util.combine_dict_lists_by_key([nodes, node_addresses], dict_keys.NODE_NID)
-    for node in nodes_with_addresses:
+    nodes = util.combine_dict_lists_by_key([simulation_nodes, node_addresses], dict_keys.NODE_NID)
+    for node in nodes:
         program = programs_by_name[node[dict_keys.NODE_PROGRAM]]
         peer_nid_list = ','.join(node[dict_keys.NODE_CONNECTIONS])
         run_args = [peer_nid_list, node[dict_keys.NODE_NID], str(node[dict_keys.NODE_ADDRESSES_PORT]),
