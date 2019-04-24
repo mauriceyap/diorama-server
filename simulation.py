@@ -106,6 +106,21 @@ def load_simulation_data():
     store_simulation_config(simulation_config)
 
 
+def generate_connection_parameters_by_node() -> Dict[str, Dict[str, Dict[str, Any]]]:
+    connection_parameters_by_node: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    all_connection_parameters: Dict[str, Dict[str, Dict[str, Any]]] = network_topology.get_connection_parameters()
+    for from_nid in all_connection_parameters:
+        for to_nid in all_connection_parameters[from_nid]:
+            if from_nid not in connection_parameters_by_node:
+                connection_parameters_by_node[from_nid] = {}
+            if to_nid not in connection_parameters_by_node:
+                connection_parameters_by_node[to_nid] = {}
+            this_connection_parameters: Dict[str, Any] = all_connection_parameters[from_nid][to_nid]
+            connection_parameters_by_node[from_nid][to_nid] = this_connection_parameters
+            connection_parameters_by_node[to_nid][from_nid] = this_connection_parameters
+    return connection_parameters_by_node
+
+
 def create_node_containers():
     programs_by_name = {program[dict_keys.PROGRAM_NAME]: program for program in get_simulation_program_list()}
     simulation_nodes: List[Dict[str, Any]] = get_simulation_node_list()
@@ -173,12 +188,17 @@ def create_program_images(temp_dir: tempfile.TemporaryDirectory):
     node_addresses_file_path = os.path.join(str(temp_dir), constants.NODE_ADDRESSES_FILE_NAME)
     with open(node_addresses_file_path, 'w') as node_addresses_file:
         yaml.dump(node_addresses, node_addresses_file, default_flow_style=False)
+    connection_parameters_by_node = generate_connection_parameters_by_node()
+    connection_parameters_by_node_file_path = os.path.join(str(temp_dir), constants.CONNECTION_PARAMETERS_FILE_NAME)
+    with open(connection_parameters_by_node_file_path, 'w') as connection_parameters_by_node_file:
+        yaml.dump(connection_parameters_by_node, connection_parameters_by_node_file, default_flow_style=False)
     for program in get_simulation_program_list():
         with tempfile.TemporaryDirectory() as _program_temp_dir:
             program_temp_dir = os.path.join(str(_program_temp_dir), 'tmp')  # workaround as copytree requires empty dst
             shutil.copytree(os.path.join(constants.BASE_NODE_FILES_DIRECTORY, program[dict_keys.PROGRAM_RUNTIME]),
                             program_temp_dir)
             shutil.copy2(node_addresses_file_path, program_temp_dir)
+            shutil.copy2(connection_parameters_by_node_file_path, program_temp_dir)
             get_code_for_program(program, program_temp_dir)
             docker_interface.create_image(str(program_temp_dir), program[dict_keys.PROGRAM_NAME])
 

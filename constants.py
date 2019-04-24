@@ -24,6 +24,7 @@ DOCKER_NETWORK_NAME = 'DIORAMA_NETWORK'
 
 BASE_NODE_FILES_DIRECTORY = os.path.join('.', 'base_node_files')
 NODE_ADDRESSES_FILE_NAME: str = 'node_addresses.yml'
+CONNECTION_PARAMETERS_FILE_NAME: str = 'connection_parameters.yml'
 
 NODE_MAIN_FILE_NAME_FOR_RAW = 'node'
 USER_NODE_FILES_DIRECTORY_NAME = 'user_node_files'
