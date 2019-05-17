@@ -107,14 +107,12 @@ def load_simulation_data():
 
 
 def generate_connection_parameters_by_node() -> Dict[str, Dict[str, Dict[str, Any]]]:
-    connection_parameters_by_node: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    connection_parameters_by_node: Dict[str, Dict[str, Dict[str, Any]]] = {
+        node[dict_keys.NODE_NID]: {} for node in get_simulation_node_list()
+    }
     all_connection_parameters: Dict[str, Dict[str, Dict[str, Any]]] = network_topology.get_connection_parameters()
     for from_nid in all_connection_parameters:
         for to_nid in all_connection_parameters[from_nid]:
-            if from_nid not in connection_parameters_by_node:
-                connection_parameters_by_node[from_nid] = {}
-            if to_nid not in connection_parameters_by_node:
-                connection_parameters_by_node[to_nid] = {}
             this_connection_parameters: Dict[str, Any] = all_connection_parameters[from_nid][to_nid]
             connection_parameters_by_node[from_nid][to_nid] = this_connection_parameters
             connection_parameters_by_node[to_nid][from_nid] = this_connection_parameters
@@ -170,13 +168,21 @@ def get_code_for_program(program, temp_dir):
             [constants.NODE_MAIN_FILE_NAME_FOR_RAW,
              constants.FILE_EXTENSIONS_FOR_RUNTIME[program[dict_keys.PROGRAM_RUNTIME]]])
         with open(os.path.join(dir_to_write_to, file_name), 'w') as file:
-            file.write(program[dict_keys.PROGRAM_CODE_DATA])
+            file.write(program[dict_keys.PROGRAM_CODE_DATA][dict_keys.PROGRAM_CODE_DATA_RAW_CODE])
     elif code_source == program_values.CODE_SOURCE_ZIP:
         pass
         # TODO
     elif code_source == program_values.CODE_SOURCE_GIT:
         # TODO
         pass
+
+
+def inject_user_dependencies(program, temp_dir):
+    if program[dict_keys.PROGRAM_RUNTIME] == 'python3':
+        user_dependencies = program[dict_keys.PROGRAM_CODE_DATA][dict_keys.PROGRAM_CODE_DATA_RAW_CODE_DEPENDENCIES]
+        with open(os.path.join(temp_dir, 'requirements.txt'), 'a') as requirements_txt:
+            requirements_txt.write('\n')
+            requirements_txt.write(user_dependencies)
 
 
 def generate_and_store_node_addresses():
@@ -200,6 +206,7 @@ def create_program_images(temp_dir: tempfile.TemporaryDirectory):
             shutil.copy2(node_addresses_file_path, program_temp_dir)
             shutil.copy2(connection_parameters_by_node_file_path, program_temp_dir)
             get_code_for_program(program, program_temp_dir)
+            inject_user_dependencies(program, program_temp_dir)
             docker_interface.create_image(str(program_temp_dir), program[dict_keys.PROGRAM_NAME])
 
 

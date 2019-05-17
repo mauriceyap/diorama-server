@@ -62,6 +62,8 @@ PROGRAM_CODE_DATA = 'codeData'
 PROGRAM_RUNTIME = 'runtime'
 PROGRAM_DESCRIPTION = 'description'
 PROGRAM_MAIN_HANDLER = 'mainHandler'
+PROGRAM_CODE_DATA_RAW_CODE = 'code'
+PROGRAM_CODE_DATA_RAW_CODE_DEPENDENCIES = 'dependencies'
 
 SIMULATION_NODE_LIST: str = 'simulationNodeList'
 SIMULATION_PROGRAM_LIST: str = 'simulationProgramList'
