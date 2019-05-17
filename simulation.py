@@ -3,9 +3,11 @@ import shutil
 import os
 import tempfile
 from ipaddress import IPv4Address
+from zipfile import ZipFile
 
 from tinydb import Query
 import yaml
+from git import Repo
 
 import network_topology
 import docker_interface
@@ -170,14 +172,18 @@ def get_code_for_program(program, temp_dir):
         with open(os.path.join(dir_to_write_to, file_name), 'w') as file:
             file.write(program[dict_keys.PROGRAM_CODE_DATA][dict_keys.PROGRAM_CODE_DATA_RAW_CODE])
     elif code_source == program_values.CODE_SOURCE_ZIP:
-        pass
-        # TODO
+        with ZipFile(f"out/program_zip_files/{program[dict_keys.PROGRAM_NAME]}.zip", 'r') as zip_file_obj:
+            zip_file_obj.extractall(dir_to_write_to)
     elif code_source == program_values.CODE_SOURCE_GIT:
-        # TODO
-        pass
+        git_repo: Repo = Repo.clone_from(program[dict_keys.PROGRAM_CODE_DATA][dict_keys.PROGRAM_CODE_DATA_GIT_REPO_URL],
+                                         dir_to_write_to)
+        git_repo.git.checkout(
+            program[dict_keys.PROGRAM_CODE_DATA][dict_keys.PROGRAM_CODE_DATA_GIT_CHECKOUT_BRANCH_OR_TAG])
 
 
 def inject_user_dependencies(program, temp_dir):
+    if program[dict_keys.PROGRAM_CODE_SOURCE] != program_values.CODE_SOURCE_RAW:
+        return
     if program[dict_keys.PROGRAM_RUNTIME] == 'python3':
         user_dependencies = program[dict_keys.PROGRAM_CODE_DATA][dict_keys.PROGRAM_CODE_DATA_RAW_CODE_DEPENDENCIES]
         with open(os.path.join(temp_dir, 'requirements.txt'), 'a') as requirements_txt:
@@ -241,7 +247,7 @@ def set_up_simulation(send_func: Callable):
             store_simulation_state(simulation_values.READY_TO_RUN_STATE)
             send_func(ws_events.SIMULATION_STATE, simulation_values.READY_TO_RUN_STATE)
         except Exception as e:
-            print(e)
+            print(f'ERROR: {e}')
             stop_and_reset_simulation(send_func)
 
 
