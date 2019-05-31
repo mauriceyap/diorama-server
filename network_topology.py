@@ -1,4 +1,4 @@
-from typing import Dict, Callable, Any, List
+from typing import Dict, Callable, Any, List, Set
 import re
 
 import yaml
@@ -323,6 +323,7 @@ def update_unpacked_topology_with_self_connected_nodes():
     raw = get_raw_network_topology_code()
     topology = parsers[language](raw)
     save_unpacked_network_topology(unpack_topology(topology))
+    update_self_connection_parameters()
 
 
 def save_unpacked_network_topology(unpacked_topology: List[Dict]):
@@ -416,10 +417,33 @@ def save_initial_connection_parameters():
         nid = node[dict_keys.NODE_NID]
         connections = node[dict_keys.NODE_CONNECTIONS]
         for connection_nid in connections:
-            if connection_nid > nid:
+            if connection_nid >= nid:
                 if nid not in connection_parameters:
                     connection_parameters[nid] = {}
                 connection_parameters[nid][connection_nid] = constants.DEFAULT_CONNECTION_PARAMETERS
+    save_connection_parameters(connection_parameters)
+
+
+def update_self_connection_parameters():
+    connection_parameters: Dict[str, Dict[str, Dict[str, Any]]] = get_connection_parameters()
+    unpacked_topology: List[dict] = get_unpacked_network_topology()
+    for node in unpacked_topology:
+        nid: str = node[dict_keys.NODE_NID]
+        is_node_self_connected: bool = nid in node[dict_keys.NODE_CONNECTIONS]
+        if is_node_self_connected:
+            if nid in connection_parameters:
+                if nid not in connection_parameters[nid]:
+                    connection_parameters[nid][nid] = constants.DEFAULT_CONNECTION_PARAMETERS
+            else:
+                connection_parameters[nid] = {nid: constants.DEFAULT_CONNECTION_PARAMETERS}
+        else:
+            connection_parameters_keys_to_remove: Set[str] = set()  # remove empty dictionaries
+            if nid in connection_parameters[nid]:
+                del connection_parameters[nid][nid]
+            if len(connection_parameters[nid]) == 0:
+                connection_parameters_keys_to_remove.add(nid)
+            for nid_to_remove in connection_parameters_keys_to_remove:
+                del connection_parameters[nid_to_remove]
     save_connection_parameters(connection_parameters)
 
 
