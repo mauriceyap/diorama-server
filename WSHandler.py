@@ -57,7 +57,11 @@ handlers: Dict[str, Callable] = {
     ws_events.PERFORM_NODE_ACTION:
         (lambda data, send_func: simulation.perform_node_action(data)),
     ws_events.STREAM_NODE_LOGS:
-        (lambda data, _: simulation.stream_node_logs(data))
+        (lambda data, _: simulation.stream_node_logs(data)),
+    ws_events.GET_CURRENT_SIMULATION_HASH: (
+        lambda _, send_func: send_func(ws_events.CURRENT_SIMULATION_HASH, simulation.get_current_simulation_hash())),
+    ws_events.SET_CURRENT_SIMULATION_HASH: (
+        lambda data, _: simulation.store_simulation_current_simulation_hash(data))
 }
 
 

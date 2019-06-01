@@ -15,6 +15,8 @@ GET_SIMULATION_STATE: str = 'getSimulationState'
 GET_SIMULATION_NODES: str = 'getSimulationNodes'
 PERFORM_NODE_ACTION: str = 'performNodeAction'
 STREAM_NODE_LOGS: str = 'streamNodeLogs'
+GET_CURRENT_SIMULATION_HASH: str = 'getCurrentSimulationHash'
+SET_CURRENT_SIMULATION_HASH: str = 'setCurrentSimulationHash'
 
 
 # Send
@@ -26,3 +28,4 @@ CUSTOM_CONFIG: str = 'customConfig'
 SIMULATION_STATE: str = 'simulationState'
 SIMULATION_NODES: str = 'simulationNodes'
 SIMULATION_LOGS: str = 'simulationLogs'
+CURRENT_SIMULATION_HASH: str = 'currentSimulationHash'

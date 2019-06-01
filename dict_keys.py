@@ -69,11 +69,13 @@ PROGRAM_CODE_DATA_GIT_CHECKOUT_BRANCH_OR_TAG = 'checkoutBranchOrTag'
 
 SIMULATION_NODE_LIST: str = 'simulationNodeList'
 SIMULATION_PROGRAM_LIST: str = 'simulationProgramList'
+SIMULATION_CURRENT_SIMULATION_HASH: str = 'currentSimulationHash'
 SIMULATION_CONFIG: str = 'simulationConfigKey'
 SIMULATION_NODE_ADDRESSES: str = 'simulationNodeAddresses'
 SIMULATION_DATA: str = 'data'
 SIMULATION_TYPE: str = 'type'
 SIMULATION_STATE: str = 'state'
+SIMULATION_PROGRAMS: str = 'programs'
 
 NODE_ADDRESSES_NID = 'nid'
 NODE_ADDRESSES_IP_ADDRESS = 'ip_address'

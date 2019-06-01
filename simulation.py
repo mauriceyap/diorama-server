@@ -55,6 +55,14 @@ def store_simulation_program_list(simulation_programs: List[Dict[str, Any]]):
     store_to_simulation_db(dict_keys.SIMULATION_PROGRAM_LIST, simulation_programs)
 
 
+def get_current_simulation_hash() -> str:
+    return get_from_simulation_db(dict_keys.SIMULATION_CURRENT_SIMULATION_HASH, result_if_none="")
+
+
+def store_simulation_current_simulation_hash(current_simulation_hash: str):
+    store_to_simulation_db(dict_keys.SIMULATION_CURRENT_SIMULATION_HASH, current_simulation_hash)
+
+
 def get_simulation_program_list() -> List[Dict[str, Any]]:
     return get_from_simulation_db(dict_keys.SIMULATION_PROGRAM_LIST, result_if_none=[])
 
